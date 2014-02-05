@@ -5,7 +5,7 @@ An interface to [Stanford's CoreNLP toolkit](http://nlp.stanford.edu/software/co
 
 Features
 ----------
-State-of-the-art dependency parsing, part-of-speech tagging, coreference resolution, tokenization, lemmatization, and named-entiy recognition for English text. 
+State-of-the-art dependency parsing, part-of-speech tagging, coreference resolution, tokenization, lemmatization, and named-entity recognition for English text. 
 
 Installation
 --------------
@@ -16,7 +16,7 @@ You must have Python 2.7 installed in a place where [PyCall](https://github.com/
 Pkg.clone("CoreNLP")
 ```
 
-2. [Download the CoreNLP package](http://nlp.stanford.edu/software/corenlp.shtml#Download) and unzip it to a location of your choosing. Direction download link: [Version 3.3.1](http://nlp.stanford.edu/software/stanford-corenlp-full-2014-01-04.zip).
+2. [Download the CoreNLP package](http://nlp.stanford.edu/software/corenlp.shtml#Download) and unzip it to a location of your choosing. Direct download link: [Version 3.3.1](http://nlp.stanford.edu/software/stanford-corenlp-full-2014-01-04.zip).
 
 Usage
 -------
@@ -28,7 +28,7 @@ Usage
 DepParse([DepNode(3,0,"root"),DepNode(1,3,"nsubj"),DepNode(2,3,"aux"),DepNode(4,5,"advmod"),DepNode(5,7,"advmod"),DepNode(6,7,"nsubj"),DepNode(7,3,"ccomp")])
 > my_parse.sentences[2].words[3] # The third word token in the second sentence, with all its annotations
 Word("see","see","O","VB")
-> my_parse.corefs[1].mentions # The set of all mentions that correspond to my_parse.corefs[1].repr (The representative mention), identified by a (sentence word-start, word-end) address (the last coordinate is of the root word of the coference)
+> my_parse.corefs[1].mentions # The set of all mentions that correspond to my_parse.corefs[1].repr (The representative mention), identified by a (sentence, word-start, word-end) address. The last coordinate is of the root word of the coference.
 2-element Array{Mention,1}:
  Mention(1,1,1,1)
  Mention(2,6,6,6)
