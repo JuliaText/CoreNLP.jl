@@ -68,9 +68,9 @@ Annotated() = Annotated(Sentence[], Coref[])
 
 function pprint(io::IO, a::Annotated)
     for coref in a.corefs
-        print(io, "Coreferencing ")
+        print(io, "Coreferencing \"")
         pprint(io, coref.repr, a)
-        print(io, ":\n")
+        print(io, "\":\n")
         for m in coref.mentions
             pprint(io, m, a)
             print(io, "\n")
@@ -117,8 +117,8 @@ end
 
 function parse_mention(m)
     sentence = int(m[2])+1
-    start_pos = int(m[3])+1
-    end_pos = int(m[4])+1
+    start_pos = int(m[4])+1
+    end_pos = int(m[3])+1
     head_pos = int(m[5]) # should this be +1 too?
     return Mention(sentence, start_pos, end_pos, head_pos)
 end
