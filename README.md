@@ -38,7 +38,7 @@ Word("see","see","O","VB")
 This outputs
 
 ```
-Coreferencing  (Mention(1,5,3,5)):
+Coreferencing "a simple sentence (Mention(1,3,5,5))":
 This (Mention(1,1,1,1))
 it (Mention(2,6,6,6))
 
