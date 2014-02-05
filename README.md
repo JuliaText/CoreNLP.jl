@@ -24,13 +24,20 @@ Usage
 > using CoreNLP
 > corenlp_init("/Users/malmaud/stanford-corenlp-full-2014-01-04") # Replace this with wherever you extracted Stanford's CoreNLP toolkit to. This may take a few minutes to execute as the large statistical language models are loaded into memory.
 > my_parse = parse("This is a simple sentence. We will see how well it parses.")
-> my_parse.sentences[2].dep_parse # The dependency parse for the second sentence.
-> my_parse.corefs[1].mentions # The set of all mentions that correspond to my_parse.corefs[1].repr (The representative mention)
+> my_parse.sentences[2].dep_parse # The dependency parse for the second sentence. The first two numbers are the index of the child and parent word token.
+DepParse([DepNode(3,0,"root"),DepNode(1,3,"nsubj"),DepNode(2,3,"aux"),DepNode(4,5,"advmod"),DepNode(5,7,"advmod"),DepNode(6,7,"nsubj"),DepNode(7,3,"ccomp")])
+> my_parse.sentences[2].words[3] # The third word token in the second sentence, with all its annotations
+Word("see","see","O","VB")
+> my_parse.corefs[1].mentions # The set of all mentions that correspond to my_parse.corefs[1].repr (The representative mention), identified by a (sentence word-start, word-end) address (the last coordinate is of the root word of the coference)
+2-element Array{Mention,1}:
+ Mention(1,1,1,1)
+ Mention(2,6,6,6)
 > pprint(my_parse) # Pretty-printing
 ```
 
 This outputs
-``
+
+```
 Coreferencing  (Mention(1,5,3,5)):
 This (Mention(1,1,1,1))
 it (Mention(2,6,6,6))
@@ -68,4 +75,4 @@ how <=(advmod) well
 well <=(advmod) parses
 it <=(nsubj) parses
 parses <=(ccomp) see
-``
+```
