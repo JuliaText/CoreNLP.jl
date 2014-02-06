@@ -20,6 +20,9 @@ Pkg.clone("CoreNLP")
 
 Usage
 -------
+
+Interactive mode (uses CoreNLP's command-line interface behind the scenes, suitable for parsing ~20 sentences or less):
+
 ```julia
 > using CoreNLP
 > corenlp_init("/Users/malmaud/stanford-corenlp-full-2014-01-04") # Replace this with wherever you extracted Stanford's CoreNLP toolkit to. This may take a few minutes to execute as the large statistical language models are loaded into memory.
@@ -76,3 +79,12 @@ well <=(advmod) parses
 it <=(nsubj) parses
 parses <=(ccomp) see
 ```
+
+Batch mode (process a directory of files):
+
+```julia
+> using CoreNLP
+> batch_parse("/data/my_files", memory="8g")
+```
+
+This processes each text file in the folder ``/data/my_files`` and return an array of ``Annotation`` objects, one for each file. The ``memory`` keyword controls how much memory the Java virtual machine is allocated. Each invocation of ``batch_parse`` reloads CoreNLP into memory. 
