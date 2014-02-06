@@ -84,7 +84,7 @@ Batch mode (process a directory of files):
 
 ```julia
 > using CoreNLP
-> batch_parse("/data/my_files", memory="8g")
+> batch_parse("/data/my_files", "/Users/malmaud/stanford-corenlp-full-2014-01-04", memory="8g")
 ```
 
 This processes each text file in the folder ``/data/my_files`` and return an array of ``Annotation`` objects, one for each file. The ``memory`` keyword controls how much memory the Java virtual machine is allocated. Each invocation of ``batch_parse`` reloads CoreNLP into memory. 
