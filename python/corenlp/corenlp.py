@@ -331,8 +331,8 @@ def parse_parser_xml_results(xml, file_name="", raw_output=False):
                              for token in raw_sent_list[id]['tokens']['token']]
 
         sent['dependencies'] = [[enforceList(dep['dep'])[i]['@type'],
-                                 enforceList(dep['dep'])[i]['governor']['#text'],
-                                 enforceList(dep['dep'])[i]['dependent']['#text']]
+                                 enforceList(dep['dep'])[i]['governor']['@idx'],
+                                 enforceList(dep['dep'])[i]['dependent']['@idx']]
                                 for dep in raw_sent_list[id]['dependencies'] if dep.get('dep')
                                 for i in xrange(len(enforceList(dep['dep'])))
                                 if dep['@type'] == 'basic-dependencies']
@@ -384,8 +384,8 @@ def parse_xml_output(input_dir, corenlp_path=DIRECTORY, memory="3g", raw_output=
                 file_name = re.sub('.xml$', '', os.path.basename(output_file))
                 # result.append(parse_parser_xml_results(xml.read(), file_name,
                 #                                        raw_output=raw_output))
-                yield parse_parser_xml_results(xml.read(), file_name,
-                                               raw_output=raw_output)
+                yield json.dumps(parse_parser_xml_results(xml.read(), file_name,
+                                               raw_output=raw_output))
     finally:
         file_list.close()
         shutil.rmtree(xml_dir)

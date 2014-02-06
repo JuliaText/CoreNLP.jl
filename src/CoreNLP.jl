@@ -1,18 +1,22 @@
 module CoreNLP
 
-export corenlp_init, pprint, parse
+export corenlp_init, pprint, parse, batch_parse
 
 using JSON
 using PyCall
 
 py_nlp = nothing
 
-function corenlp_init(nlp_path="corenlp")
+function corenlp_init(nlp_path="corenlp"; kwargs...)
     global py_nlp
+    py_nlp_module = load_nlp_module()
+    py_nlp = pycall(py_nlp_module[:StanfordCoreNLP], PyObject, nlp_path; kwargs...)
+end
+
+function load_nlp_module()
     p = joinpath(Pkg.dir("CoreNLP"), "python")
     unshift!(PyVector(pyimport("sys")["path"]), p)
     py_nlp_module = pyimport("corenlp")
-    py_nlp = pycall(py_nlp_module[:StanfordCoreNLP], PyObject, nlp_path)
 end
 
 immutable Word
@@ -20,6 +24,8 @@ immutable Word
     lemma::String
     ne_tag::String
     pos::String
+    start_pos::Int
+    end_pos::Int
 end
 
 immutable DepNode
@@ -52,6 +58,7 @@ end
 immutable Annotated
     sentences::Vector{Sentence}
     corefs::Vector{Coref}
+    file_name::String
 end
 
 
@@ -64,7 +71,7 @@ DepParse() = DepParse(DepNode[])
 
 Sentence() = Sentence(DepParse(), Word[])
 
-Annotated() = Annotated(Sentence[], Coref[])
+Annotated(file_name="") = Annotated(Sentence[], Coref[], file_name)
 
 function pprint(io::IO, a::Annotated)
     for coref in a.corefs
@@ -77,7 +84,11 @@ function pprint(io::IO, a::Annotated)
         end         
         println(io)
     end
-    for (i, s) in enumerate(a.sentences)
+    pprint(io, a.sentences)
+end
+
+function pprint(io::IO, sentences::Vector{Sentence})
+    for (i, s) in enumerate(sentences)
         println("Sentence ", i, ":")
         pprint(io, s)
         println(io)
@@ -123,25 +134,54 @@ function parse_mention(m)
     return Mention(sentence, start_pos, end_pos, head_pos)
 end
 
-function parse_json(j)
-    p = JSON.parse(j)
-    ann = Annotated()
+function parse_json(j, args...)
+    parse_raw(JSON.parse(j), args...)
+end
+
+function parse_raw(p, dep_type=:py)
+    file_name = get(p, "file_name", "")
+    ann = Annotated(file_name)
     if haskey(p, "sentences")
         for sentence in p["sentences"]
             s = Sentence()
-            for parse_part in sentence["indexeddependencies"]
-                tag = parse_part[1]
-                parent_idx = extract_index(parse_part[2])
-                child_idx = extract_index(parse_part[3])
-                push!(s.dep_parse.nodes, DepNode(child_idx, parent_idx, tag))
+            if dep_type == :py
+                if haskey(sentence, "indexeddependencies")
+                    for parse_part in sentence["indexeddependencies"]
+                        tag = parse_part[1]
+                        parent_idx = extract_index(parse_part[2])
+                        child_idx = extract_index(parse_part[3])
+                        push!(s.dep_parse.nodes, DepNode(child_idx, parent_idx, tag))
+                    end
+                end
+            else
+                if haskey(sentence, "dependencies")
+                    deps = sentence["dependencies"]
+                    for i in 1:size(deps, 1)
+                        tag = deps[i][1]
+                        parent_idx = int(deps[i][2])
+                        child_idx = int(deps[i][3])
+                        push!(s.dep_parse.nodes, DepNode(child_idx, parent_idx, tag))
+                    end
+                end
             end
-            for word in sentence["words"]
-                head = word[1]
-                props = word[2]
-                lemma = props["Lemma"]
-                tag = props["NamedEntityTag"]
-                pos = props["PartOfSpeech"]
-                push!(s.words, Word(head, lemma, tag, pos))
+            if haskey(sentence, "words")
+                words = sentence["words"]
+                for i in 1:size(words, 1)
+                    if dep_type == :py
+                        word = words[i]
+                        head = word[1]
+                        props = word[2]
+                    else
+                        head = words[i][1]
+                        props = words[i][2]
+                    end
+                    lemma = props["Lemma"]
+                    tag = props["NamedEntityTag"]
+                    pos = props["PartOfSpeech"]
+                    start_pos = int(props["CharacterOffsetBegin"])
+                    end_pos = int(props["CharacterOffsetEnd"])
+                    push!(s.words, Word(head, lemma, tag, pos, start_pos, end_pos))
+                end
             end
             push!(ann.sentences, s)
         end
@@ -164,11 +204,18 @@ function check_init()
     py_nlp == nothing && error("Must call corenlp_init() first")
 end
 
-
 function parse(s)
     check_init()
     j = py_nlp[:parse](s)
     return parse_json(j)
+end
+
+function batch_parse(dir, corenlp_dir; kwargs...)
+    py_nlp_module = load_nlp_module()
+    gen = pycall(py_nlp_module["batch_parse"], PyObject, dir, corenlp_dir; kwargs...)
+    list = pyeval("list(gen)", PyVector, gen=gen)
+    ann_list = map(x->parse_json(x, :raw), list) #this doesn't work
+    return ann_list
 end
 
 end
