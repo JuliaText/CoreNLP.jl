@@ -22,8 +22,8 @@ end
 immutable Word
     lex::String
     lemma::String
-    ne_tag::String
-    pos::String
+    ne_tag::Symbol
+    pos::Symbol
     start_pos::Int
     end_pos::Int
 end
@@ -31,7 +31,7 @@ end
 immutable DepNode
     word::Int
     parent::Int
-    tag::String
+    tag::Symbol
 end
 
 immutable DepParse
@@ -74,7 +74,12 @@ Sentence() = Sentence(DepParse(), Word[])
 Annotated(file_name="") = Annotated(Sentence[], Coref[], file_name)
 
 function pprint(io::IO, a::Annotated)
-    for coref in a.corefs
+    pprint(io, a.corefs, a)
+    pprint(io, a.sentences)
+end
+
+function pprint(io::IO, corefs::Vector{Coref}, a::Annotated)
+    for coref in corefs
         print(io, "Coreferencing \"")
         pprint(io, coref.repr, a)
         print(io, "\":\n")
@@ -84,7 +89,6 @@ function pprint(io::IO, a::Annotated)
         end         
         println(io)
     end
-    pprint(io, a.sentences)
 end
 
 function pprint(io::IO, sentences::Vector{Sentence})
@@ -138,6 +142,15 @@ function parse_json(j, args...)
     parse_raw(JSON.parse(j), args...)
 end
 
+macro get(e)
+    name = e.args[1]
+    dict = e.args[2].args[1]
+    key = e.args[2].args[2]
+    quote
+        $(esc(name)) = get($(esc(dict)), $(esc(key)), "")
+    end
+end
+
 function parse_raw(p, dep_type=:py)
     file_name = get(p, "file_name", "")
     ann = Annotated(file_name)
@@ -167,17 +180,11 @@ function parse_raw(p, dep_type=:py)
             if haskey(sentence, "words")
                 words = sentence["words"]
                 for i in 1:size(words, 1)
-                    if dep_type == :py
-                        word = words[i]
-                        head = word[1]
-                        props = word[2]
-                    else
-                        head = words[i][1]
-                        props = words[i][2]
-                    end
-                    lemma = props["Lemma"]
-                    tag = props["NamedEntityTag"]
-                    pos = props["PartOfSpeech"]
+                    head = words[i][1]
+                    props = words[i][2]
+                    @get lemma = props["Lemma"]
+                    @get tag = props["NamedEntityTag"]
+                    @get pos = props["PartOfSpeech"]
                     start_pos = int(props["CharacterOffsetBegin"])
                     end_pos = int(props["CharacterOffsetEnd"])
                     push!(s.words, Word(head, lemma, tag, pos, start_pos, end_pos))
@@ -214,8 +221,9 @@ function batch_parse(dir, corenlp_dir; kwargs...)
     py_nlp_module = load_nlp_module()
     gen = pycall(py_nlp_module["batch_parse"], PyObject, dir, corenlp_dir; kwargs...)
     list = pyeval("list(gen)", PyVector, gen=gen)
-    ann_list = map(x->parse_json(x, :raw), list) #this doesn't work
-    return ann_list
+    ann_list = map(x->parse_json(x, :raw), list)
+    d = [ann.file_name=>ann for ann in ann_list]
+    return d
 end
 
 end
