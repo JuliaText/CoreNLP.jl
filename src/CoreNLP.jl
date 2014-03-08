@@ -122,6 +122,8 @@ function pprint(io::IO, n::DepNode, s::Sentence)
     @printf(io, "%s <=(%s) %s", lex_child, n.tag, lex_parent)
 end
 
+pprint(io::IO, s::String) = pprint(io, parse(s))
+
 pprint(a) = pprint(STDOUT, a)
 
 function extract_index(s)
