@@ -3,6 +3,12 @@ CoreNLP.jl
 
 An interface to [Stanford's CoreNLP toolkit](http://nlp.stanford.edu/software/corenlp.shtml) via the [corenlp-python bindings](https://bitbucket.org/torotoki/corenlp-python). 
 
+**DEPRECATION NOTICE** 
+This package is not currently being maintained for current versions of julia.
+If you have interest in getting it working, feel free to raise issues.
+
+
+
 Features
 ----------
 State-of-the-art dependency parsing, part-of-speech tagging, coreference resolution, tokenization, lemmatization, and named-entity recognition for English text. 
